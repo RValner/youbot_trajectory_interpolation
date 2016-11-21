@@ -1,7 +1,7 @@
 clear all;
 
-xOrig = [1,1.5,3,7,8,9,10,11,12,19,20,21,22,23,24,27,28,29,30];
-yOrig = [1,1.5,3,3,2,1,0,-1,-2,3,4,4.5, 5, 5, 5, 2, 2, 2, 2];
+xOrig = [1,1.5,3,7,8,9,10,11,12,19,20,21,22,23,24,27,28,29,30,31,32,33,34,35,36,37];
+yOrig = [1,1.5,3,3,2,1,0,-1,-2,3,4,4.5, 5, 5, 5, 2, 2, 2, 2, 2.5, 4, 1, 3, 2, 3, 3];
 
 %xOrig = [0.5,1,2,3,4,8,9,10,11];
 %yOrig = [0.5,1,3,5,7,33,30,27,24];
@@ -15,7 +15,7 @@ yOrig = [1,1.5,3,3,2,1,0,-1,-2,3,4,4.5, 5, 5, 5, 2, 2, 2, 2];
 
 %add noise to data
 for i = 1:size(xOrig,2)
-    yOrig(i) = yOrig(i) + rand()*1.5;
+    yOrig(i) = yOrig(i) + rand()*0.8;
 end
 
 x = xOrig;
@@ -42,7 +42,7 @@ disp('starting interpolation search ')
 
 %start looking for larger gaps first and then reduce the gap threshold per
 %eac cycle
-for k = linspace(5,1,3)
+for k = linspace(5,2,3)
     for i = 1:(size(x,2)-1)
         fprintf('  i=%d \n', i)
         diff = x(i+1)-x(i);
@@ -113,17 +113,42 @@ for k = linspace(5,1,3)
     xn = [];
     yn = [];
 end
-    
+
+% Gaussian filtering
+gaussFilter = [0.06136,	0.24477, 0.38774, 0.24477, 0.06136];
+kernelcheck = sum(gaussFilter)
+startIndex = floor(size(gaussFilter,2)/2) + 1
+
+xg = x;
+yg = [y(1), y(2)]
+
+for i = 3:(size(x,2)-2)
+    fprintf('i=%d \n', i);
+    filtered = 0;
+    for j = 1:size(gaussFilter,2)
+        filtered = filtered + gaussFilter(j)*y(i - startIndex + j);
+    end
+    yg = [yg, filtered]
+end
+
+yg = [yg, y(size(x,2) - 1), y(size(x,2))];
+
 fprintf('size of xOrig=%d \n', size(xOrig,2));
 fprintf('size of yOrig=%d \n' , size(yOrig,2));
 
-fprintf('size of xn=%d \n', size(xn,2));
-fprintf('size of yn=%d \n' , size(yn,2));
+fprintf('size of x=%d \n', size(x,2));
+fprintf('size of y=%d \n' , size(y,2));
 
-plot(x, y, '-x')
-hold
-plot(xOrig, yOrig, '-o')
+fprintf('size of xg=%d \n', size(xg,2));
+fprintf('size of yg=%d \n' , size(yg,2));
 
+plot(x, y, '-xb')
+hold on;
+plot(xOrig, yOrig, '-or')
+hold on;
+plot(xg, yg, '-+')
+
+legend('interpolated','original','interp + gauss filt.','Location','southeast')
 
  
     
