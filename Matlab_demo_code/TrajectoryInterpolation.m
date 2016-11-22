@@ -150,6 +150,8 @@ for cycle = 1:2
     if cycle == 1
         yg1 = yg;
         xg1 = x;
+        xn = [xn, x(1)];
+        
         for i = 1:(size(x,2)-1)
             diff = x(i+1)-x(i);
             vel = abs( (y(i+1)-y(i)) / diff );
@@ -183,7 +185,8 @@ plot(xOrig, yOrig, '-or')
 hold on;
 plot(xg1, yg1, '-+')
 
-%legend('interpolated','original','interp + gauss filt.','Location','southwest')
+x
+legend('interpolated','original','2x(interp + gauss filt.) + vel. comp','Location','southwest')
 
  
     
