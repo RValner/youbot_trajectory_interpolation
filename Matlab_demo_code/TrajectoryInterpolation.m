@@ -1,7 +1,7 @@
 clear all;
 
-xOrig = [1,1.5,3,7,8,9,10,11,12,19,20,21,22,23,24,27,28,29,30,31,32,33,34,35,36,37];
-yOrig = [1,1.5,3,3,2,1,0,-1,-2,3,4,4.5, 5, 5, 5, 2, 2, 2, 2, 2.5, 4, 1, 3, 2, 3, 3];
+% xOrig = [1,1.5,3,7,8,9,10,11,12,19,20,21,22,23,24,27,28,29,30,31,32,33,34,35,36,37];
+% yOrig = [1,1.5,3,3,2,1,0,-1,-2,3,4,4.5, 5, 5, 5, 2, 2, 2, 2, 2.5, 4, 1, 3, 2, 3, 3];
 
 %xOrig = [0.5,1,2,3,4,8,9,10,11];
 %yOrig = [0.5,1,3,5,7,33,30,27,24];
@@ -12,6 +12,8 @@ yOrig = [1,1.5,3,3,2,1,0,-1,-2,3,4,4.5, 5, 5, 5, 2, 2, 2, 2, 2.5, 4, 1, 3, 2, 3,
 %xOrig = [1,2,3,4,5,11,12,13,14,15];
 %yOrig = [1,1,1,1,1,3,3,3,3,3];
 
+xOrig = [1,2,3,4,5,9,10,11,12,13,14,15,21,22,23,24];
+yOrig = [1,2,8,7,6,1,1,2,2,3,4,5,2,-3,-10,10];
 
 %add noise to data
 for i = 1:size(xOrig,2)
@@ -37,6 +39,30 @@ end
 xn = [];
 yn = [];
 
+xn = [xn, x(1)];
+
+speedLimit = 2;
+timeCompensation = 0;
+stretchFactor = 1.2;
+
+%find the sections that exceed the joint speed limit
+for i = 1:(size(x,2)-1)
+    diff = x(i+1)-x(i);
+    vel = abs( (y(i+1)-y(i)) / diff );
+    
+    if vel >= speedLimit
+        fprintf('speed exceeded at i=%d, speed=%f\n', i, vel)
+        newDiff = (vel/speedLimit)*diff*stretchFactor;
+        timeCompensation = timeCompensation + (newDiff - diff);
+        fprintf('timeCompensation=%f\n', timeCompensation)
+    end
+    
+    xn = [xn, x(i+1) + timeCompensation];    
+end
+
+x = xn;
+xn = [];
+
 %start the interpolation
 disp('starting interpolation search ')
 
@@ -44,13 +70,13 @@ disp('starting interpolation search ')
 %eac cycle
 for k = linspace(5,2,3)
     for i = 1:(size(x,2)-1)
-        fprintf('  i=%d \n', i)
+        %fprintf('  i=%d \n', i)
         diff = x(i+1)-x(i);
-        fprintf('  diff=%f \n', diff)
+        %fprintf('  diff=%f \n', diff)
         
         % 
         if diff > k*shortestPeriod
-            disp('    found a gap larger than shortestPeriod')
+            %disp('    found a gap larger than shortestPeriod')
             %Get the velocities
             vel1 = 0;
             vel2 = 0;
@@ -81,7 +107,7 @@ for k = linspace(5,2,3)
 
             %start filling the area in between
             for j = 1:(stepsInt - 1)
-                fprintf('      j=%d \n', j)
+                %fprintf('      j=%d \n', j)
                 new_x = x(i) + dt*j;
                 traj1 = y(i) + vel1*dt*j + (acceleration/2)*((dt*j)^2);
                 traj2 = y(i+1) - vel2*dt*(stepsInt - j) + (acceleration/2)*((dt*(stepsInt - j))^2);
@@ -91,8 +117,8 @@ for k = linspace(5,2,3)
                 new_y = blend*traj1 + (1 - blend)*traj2;
                 %new_y = traj2;
                 
-                fprintf('      new_x=%f \n', new_x);
-                fprintf('      new_y=%f \n', new_y);
+                %fprintf('      new_x=%f \n', new_x);
+                %fprintf('      new_y=%f \n', new_y);
 
                 xn = [xn, new_x];
                 yn = [yn, new_y];
@@ -120,7 +146,7 @@ kernelcheck = sum(gaussFilter)
 startIndex = floor(size(gaussFilter,2)/2) + 1
 
 xg = x;
-yg = [y(1), y(2)]
+yg = [y(1), y(2)];
 
 for i = 3:(size(x,2)-2)
     fprintf('i=%d \n', i);
@@ -128,7 +154,7 @@ for i = 3:(size(x,2)-2)
     for j = 1:size(gaussFilter,2)
         filtered = filtered + gaussFilter(j)*y(i - startIndex + j);
     end
-    yg = [yg, filtered]
+    yg = [yg, filtered];
 end
 
 yg = [yg, y(size(x,2) - 1), y(size(x,2))];
@@ -148,7 +174,7 @@ plot(xOrig, yOrig, '-or')
 hold on;
 plot(xg, yg, '-+')
 
-legend('interpolated','original','interp + gauss filt.','Location','southeast')
+legend('interpolated','original','interp + gauss filt.','Location','southwest')
 
  
     
